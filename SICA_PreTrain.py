@@ -35,9 +35,12 @@ class SICA_Pretrain(nn.Module):
         L_ATAC = -torch.distributions.Poisson(mu_ATAC + 1e-8).log_prob(ATAC_Seq).sum()
 
         # Module 2 — Negative Binomial NLL
-        theta_pos = F.softplus(theta)
-        p = theta / (theta + X_hat_rna + 1e-8)
-        L_RNA = -torch.distributions.NegativeBinomial(theta, p).log_prob(RNA_Seq).sum()
+        theta_pos = F.softplus(theta).clamp(min=1e-4, max=1e4)
+        mu_rna = X_hat_rna.clamp(min=1e-8, max=1e6)
+        p = (mu_rna / (mu_rna + theta_pos)).clamp(1e-6, 1.0 - 1e-6)
+        L_RNA = -torch.distributions.NegativeBinomial(
+            total_count=theta_pos, probs=p, validate_args=False
+        ).log_prob(RNA_Seq).sum()
 
         # Encoder — KL divergence with annealing
         beta = min(step / anneal_steps, 1.0) * beta_max

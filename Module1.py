@@ -16,7 +16,7 @@ class ATAC_Seq_Reconstruction(nn.Module):
 
     def forward(self, z, log_library_atac):
         logits_ATAC = self.mlp(z)
-        mu_ATAC     = torch.exp(logits_ATAC) * torch.exp(log_library_atac.unsqueeze(1))
         p_access    = torch.softmax(logits_ATAC, dim=1)
+        mu_ATAC     = p_access * torch.exp(log_library_atac.unsqueeze(1))
 
         return mu_ATAC, p_access

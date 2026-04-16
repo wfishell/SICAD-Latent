@@ -26,7 +26,7 @@ class TF_Sparse_Cosine_Attention(nn.Module):
           cumsum = torch.cumsum(sorted_z, dim=-1)                                                                                                                                                   
           k = torch.arange(1, z.shape[-1] + 1, device=z.device).float()
           support = (1 + k * sorted_z) > cumsum                                                                                                                                                     
-          k_z = support.sum(dim=-1, keepdim=True).float()                                                                                                                                           
+          k_z = support.sum(dim=-1, keepdim=True).float().clamp(min=1)
           tau_z = (cumsum.gather(-1, (k_z - 1).long()) - 1) / k_z
           return torch.clamp(z - tau_z, min=0)
 
